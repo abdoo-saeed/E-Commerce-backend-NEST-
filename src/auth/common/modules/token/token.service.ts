@@ -52,8 +52,11 @@ export class TokenService {
     }
 
     const user = await this.userRepo.findById(_id)
-    if(!user || !user.isEmailConfirmed){
-        throw new UnauthorizedException("user not found")
+    if(!user){
+        throw new UnauthorizedException("user not found") 
+    }
+    if(!user.isEmailConfirmed){
+        throw new UnauthorizedException("user not confirmed")
     }
 
     // const tokenKey = revokedTokenKey({
@@ -71,7 +74,7 @@ export class TokenService {
     }
 
     
-    return user
+    return {user,jti}
     
 
 }

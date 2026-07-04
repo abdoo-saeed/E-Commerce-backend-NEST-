@@ -1,7 +1,8 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { BadRequestException, CanActivate, ExecutionContext, Inject, Injectable } from "@nestjs/common";
 import { Request } from "express";
 import { TokenService } from "../modules/token/token.service";
 import { IHUser } from "src/db/user.schema";
+import { RedisService } from './../services/redis.services';
 
 
 
@@ -16,7 +17,9 @@ export interface IAuthRequest extends Request{
 export class AuthGuard implements CanActivate{
 
     constructor(
-        private readonly tokenService:TokenService
+        private readonly tokenService:TokenService,
+        private readonly RedisService:RedisService
+        
     ){}
 
 
@@ -38,11 +41,22 @@ export class AuthGuard implements CanActivate{
                 break;
         }
 
-        const user = await this.tokenService.decodeToken(authorization)
+        const {user,jti} = await this.tokenService.decodeToken(authorization)
 
         if(!user){
             throw new BadRequestException("in_valid auth")
         }
+
+        if(jti){
+            const jtiKey = this.RedisService.getJtiKey(user.email,jti) as string
+            const redisJti = await this.RedisService.get({key:jtiKey})
+            if(!redisJti){
+                  throw new BadRequestException("login again!")
+            }
+        }
+
+
+
         req.user = user
         return true
 

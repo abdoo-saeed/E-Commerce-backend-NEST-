@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, SetMetadata, UseGuards } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import { CustomValidationPipe } from './pipes/validation.pipe';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard, type IAuthRequest } from './common/guards/auth.guard';
+import { RoleEnum } from './common/enums/user.enums';
+import { AuthorizationGuard } from './common/guards/authorization.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -36,7 +38,8 @@ export class AuthController {
 
 
   @Get("profile")
-  @UseGuards(AuthGuard)
+  @SetMetadata("roles",[RoleEnum.user])
+  @UseGuards(AuthGuard,AuthorizationGuard)
   async getProfile(@Req() req:IAuthRequest){
 
     return {
